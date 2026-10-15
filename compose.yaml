@@ -1,0 +1,85 @@
+name: tickethub
+x-app: &app
+  image: tickethub-app:v2
+  build:
+    context: .
+    target: app
+  env_file: .env
+  environment:
+    DB_HOST: db
+    REDIS_HOST: redis
+    REDIS_ADMISSION_HOST: redis-admission
+  volumes:
+    - app-storage:/var/www/html/storage
+  restart: unless-stopped
+  depends_on:
+    db:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+    redis-admission:
+      condition: service_healthy
+services:
+  db:
+    image: mariadb:10.11
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:?Set a unique root password in .env}
+      MARIADB_DATABASE: ${DB_DATABASE:-tickethub}
+      MARIADB_USER: ${DB_USERNAME:-tickethub}
+      MARIADB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+    volumes:
+      - db-data:/var/lib/mysql
+      - ./deploy/mariadb.cnf:/etc/mysql/conf.d/tickethub.cnf:ro
+    healthcheck:
+      test: [CMD, healthcheck.sh, --connect, --innodb_initialized]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    restart: unless-stopped
+  redis:
+    image: redis:7-alpine
+    command: [redis-server, --appendonly, 'yes', --maxmemory, 256mb, --maxmemory-policy, noeviction, --requirepass, '${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}']
+    environment:
+      REDISCLI_AUTH: ${REDIS_PASSWORD}
+    volumes: [redis-data:/data]
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+  redis-admission:
+    image: redis:7-alpine
+    command: [redis-server, --appendonly, 'yes', --maxmemory, 256mb, --maxmemory-policy, noeviction, --requirepass, '${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}']
+    environment:
+      REDISCLI_AUTH: ${REDIS_PASSWORD}
+    volumes: [admission-data:/data]
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+  app:
+    <<: *app
+  worker:
+    <<: *app
+    user: www-data
+    command: [php, artisan, 'queue:work', redis, '--queue=notifications,default', '--sleep=1', '--tries=5', '--timeout=30', '--max-jobs=1000']
+  scheduler:
+    <<: *app
+    user: www-data
+    command: [php, artisan, 'schedule:work']
+  web:
+    image: tickethub-web:v2
+    build:
+      context: .
+      target: web
+    ports: ['127.0.0.1:8080:80']
+    depends_on: [app]
+    restart: unless-stopped
+volumes:
+  db-data:
+  redis-data:
+  admission-data:
+  app-storage:

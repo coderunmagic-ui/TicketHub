@@ -1,0 +1,3 @@
+@extends('layout')
+@section('content')<section class="hero"><span class="eyebrow">MAKE TIME FOR SOMETHING GOOD</span><h1>把時間留給<br>值得參與的活動。</h1><p class="muted">探索免費體驗與精選工作坊，找到下一次相遇。</p></section>
+<h2>近期活動</h2><div class="grid">@forelse($events as $event)<article class="card"><div class="art" aria-hidden="true">✳</div><span class="badge">{{ $event->starts_at->format('m 月 d 日') }}</span><h2><a href="{{ route('events.show',$event) }}">{{ $event->title }}</a></h2><p class="muted">{{ $event->location }}</p><p>{{ \Illuminate\Support\Str::limit($event->description,90) }}</p><a class="button" href="{{ route('events.show',$event) }}">查看活動 →</a></article>@empty<div class="panel">目前沒有公開活動。</div>@endforelse</div>{{ $events->links() }}@endsection

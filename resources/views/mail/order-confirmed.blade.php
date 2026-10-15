@@ -1,0 +1,1 @@
+<!doctype html><html lang="zh-Hant"><body><h1>報名成功</h1><p>{{ $order->attendee_name }}，你好：</p><p>你已成功報名 {{ $order->ticketType->event->title }}。</p><p>{{ $order->ticketType->name }} × {{ $order->quantity }} 張</p><p>訂單編號：{{ $order->number }}</p><p><a href="{{ route('orders.show',$order) }}">登入查看票券</a></p><p>請以網站中的最新訂單狀態為準。</p></body></html>

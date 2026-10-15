@@ -1,0 +1,2 @@
+@extends('layout')
+@section('content')<section class="panel auth"><h1>設定新密碼</h1><form method="post" action="{{ route('password.update') }}">@csrf<input type="hidden" name="token" value="{{ $token }}"><label>Email<input name="email" type="email" value="{{ old('email',$email) }}" required></label><label>新密碼<input name="password" type="password" minlength="12" required></label><label>再次輸入<input name="password_confirmation" type="password" required></label><div class="actions"><button>更新密碼</button></div></form></section>@endsection

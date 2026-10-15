@@ -1,0 +1,1 @@
+@if($paginator->hasPages())<nav class="pagination">@if($paginator->previousPageUrl())<a href="{{ $paginator->previousPageUrl() }}">← 上一頁</a>@else<span></span>@endif<span>第 {{ $paginator->currentPage() }} 頁</span>@if($paginator->hasMorePages())<a href="{{ $paginator->nextPageUrl() }}">下一頁 →</a>@endif</nav>@endif
